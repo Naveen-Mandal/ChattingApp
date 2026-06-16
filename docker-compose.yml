@@ -1,0 +1,34 @@
+
+services:
+  whatsapp-db:
+    image: mysql:8.0
+    container_name: whatsapp_mysql_container
+    environment:
+      MYSQL_ROOT_PASSWORD: Naveen@1234
+      MYSQL_DATABASE: whatsapp_db
+      MYSQL_USER: naveen_developer
+      MYSQL_PASSWORD: Naveen123#
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data_volume:/var/lib/mysql
+    networks:
+      - whatsapp_network
+
+  whatsapp-backend:
+    build: ./backend
+    container_name: whatsapp_backend_container
+    ports:
+      - "8080:8080"
+    networks:
+      - whatsapp_network
+    environment:
+      DB_HOST: whatsapp-db
+      DB_NAME: whatsapp_db
+      DB_USER: naveen_developer
+      DB_PASSWORD: Naveen123#
+    depends_on:
+      - whatsapp-db
+
+
+
