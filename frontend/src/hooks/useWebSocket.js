@@ -4,12 +4,10 @@ import { useChatStore } from '../store/chatStore';
 
 export const useWebSocket = () => {
   const { currentUser, addMessage, setStompClient } = useChatStore();
-  const clientRef = useRef(null); // Ref use karenge taaki client persistent rahe
+  const clientRef = useRef(null); 
 
   useEffect(() => {
     if (!currentUser) return;
-
-    // Pehle se connection hai toh dobara mat banao
     if (clientRef.current) return;
 
     const client = new Client({
@@ -20,16 +18,18 @@ export const useWebSocket = () => {
     });
 
     client.onConnect = () => {
-      console.log(`Socket pipe mapped for user: ${currentUser.id}`);
-      client.subscribe(`/user/${currentUser.id}/queue/messages`, (payload) => {
+      console.log(`Socket pipe mapped safely for user public scope: ${currentUser.publicId}`);
+      
+      // FIX: Changed subscription from .id to .publicId to align with backend routing target
+      client.subscribe(`/user/${currentUser.publicId}/queue/messages`, (payload) => {
         const receivedMessage = JSON.parse(payload.body);
         addMessage(receivedMessage);
       });
     };
 
     client.activate();
-    clientRef.current = client; // Ref mein store karo
-    setStompClient(client); // Zustand mein set karo
+    clientRef.current = client; 
+    setStompClient(client); 
 
     return () => {
       if (clientRef.current) {
@@ -38,5 +38,5 @@ export const useWebSocket = () => {
         setStompClient(null);
       }
     };
-  }, [currentUser]); // dependencies sirf currentUser rakhi
+  }, [currentUser]); 
 };

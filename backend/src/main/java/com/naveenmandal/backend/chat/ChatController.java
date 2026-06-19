@@ -5,24 +5,36 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/chats")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*") // Allows connection handshake from React frontend later
+@CrossOrigin(origins = "*") 
 public class ChatController {
 
     private final ChatService chatService;
 
-    // Do users ke beech conversation room init karne ke liye
+    // FIX: Map database entity into ChatDto to completely eliminate LazyInitializationException errors
     @PostMapping
-    public ResponseEntity<Chat> createOrGetChat(@RequestParam Long senderId, @RequestParam Long recipientId) {
-        return ResponseEntity.ok(chatService.createOrGetChat(senderId, recipientId));
+    public ResponseEntity<ChatDto> createOrGetChat(@RequestParam Long senderId, @RequestParam Long recipientId) {
+        Chat chat = chatService.createOrGetChat(senderId, recipientId);
+        return ResponseEntity.ok(convertToDto(chat));
     }
 
-    // Kisi specific user ki saari active chats fetch karne ke liye
     @GetMapping("/user/{publicId}")
-    public ResponseEntity<List<Chat>> getAllChatsForUser(@PathVariable String publicId) {
-        return ResponseEntity.ok(chatService.getAllChatsForUser(publicId));
+    public ResponseEntity<List<ChatDto>> getAllChatsForUser(@PathVariable String publicId) {
+        List<Chat> chats = chatService.getAllChatsForUser(publicId);
+        List<ChatDto> dtos = chats.stream().map(this::convertToDto).collect(Collectors.toList());
+        return ResponseEntity.ok(dtos);
+    }
+
+    private ChatDto convertToDto(Chat chat) {
+        return ChatDto.builder()
+                .id(chat.getId())
+                .publicChatId(chat.getPublicChatId())
+                .sender(new ChatDto.UserSummary(chat.getSender().getId(), chat.getSender().getPublicId(), chat.getSender().getUsername()))
+                .recipient(new ChatDto.UserSummary(chat.getRecipient().getId(), chat.getRecipient().getPublicId(), chat.getRecipient().getUsername()))
+                .build();
     }
 }
