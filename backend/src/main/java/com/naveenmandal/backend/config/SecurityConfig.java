@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -19,12 +20,19 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            // 1. Enable CORS and explicitly disable CSRF to allow REST interaction
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-            .csrf(AbstractHttpConfigurer::disable)
-            // FIXED: Explicitly disable security on all API and WebSocket paths for development
+            .csrf(AbstractHttpConfigurer::disable) 
+            
+            // 2. Permit all testing endpoints
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/**", "/ws-chat/**", "/error").permitAll()
-                .anyRequest().permitAll() // Allow EVERYTHING during dev phase
+                .requestMatchers("/api/**", "/ws-chat/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            
+            // 3. Stateless policy ensures no session-based auth is required
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             );
 
         return http.build();
@@ -35,8 +43,9 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:5173"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowedHeaders(List.of("*")); // Allows all headers including Auth tokens
         configuration.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

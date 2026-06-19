@@ -1,58 +1,97 @@
-import React, { useState } from 'react';
-import apiClient from '../../api/apiClient';
+import React, { useState, useRef } from 'react';
 import { useChatStore } from '../../store/chatStore';
+import apiClient from '../../api/apiClient';
 
 function MessageInput() {
   const [text, setText] = useState('');
-  const { currentUser, activeChat, addMessage } = useChatStore();
+  const { activeChat, currentUser, stompClient, addMessage } = useChatStore();
+  const typingTimeoutRef = useRef(null);
+  const isTypingRef = useRef(false);
+
+  // Path B Feature: WebSocket emit trigger for real-time typing indicators
+  const sendTypingStatus = (isTyping) => {
+    if (stompClient && stompClient.connected && activeChat) {
+      stompClient.publish({
+        destination: `/app/typing/${activeChat.publicChatId}`,
+        body: JSON.stringify({ 
+          username: currentUser.name || currentUser.username, 
+          isTyping 
+        })
+      });
+    }
+  };
+
+  const handleInputChange = (e) => {
+    setText(e.target.value);
+
+    // Debounce engine for typing status
+    if (!isTypingRef.current) {
+      isTypingRef.current = true;
+      sendTypingStatus(true);
+    }
+
+    clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      isTypingRef.current = false;
+      sendTypingStatus(false);
+    }, 2000); // 2-second timeout before resetting typing state
+  };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!text.trim()) return;
+    if (!text.trim() || !activeChat) return;
 
-    // FIX: Verify conversation partner roles so replies don't route back to yourself
-    const targetRecipientId = activeChat.recipient?.publicId === currentUser?.publicId
-      ? activeChat.sender?.publicId
-      : activeChat.recipient?.publicId;
-
-    // Package the pure DTO frame
-    const messageDto = {
-      // FIX: Use publicChatId string token to keep messages from disappearing locally
-      publicChatId: activeChat.publicChatId, 
+    // Construct the payload for Kafka propagation
+    const payload = {
+      publicChatId: activeChat.publicChatId,
       senderId: currentUser.publicId,
-      receiverId: targetRecipientId,
+      receiverId: activeChat.recipient.publicId === currentUser.publicId 
+                  ? activeChat.sender.publicId 
+                  : activeChat.recipient.publicId,
       content: text,
-      type: 'TEXT'
+      type: "TEXT"
     };
 
-    // Optimistic local update: instant visual append on sender's screen before network response
-    addMessage(messageDto);
+    // Optimistic UI Update: Turant list mein append karein (Zero-latency feel)
+    const optimisticMessage = {
+        ...payload,
+        id: Date.now(), 
+        status: "SENDING",
+        createdAt: new Date().toISOString()
+    };
+    addMessage(optimisticMessage);
+    
+    const currentInput = text;
     setText('');
 
     try {
-      // Fire and forget: drop the payload onto Kafka asynchronous queue pipeline
-      await apiClient.post('/messages/send', messageDto);
+      clearTimeout(typingTimeoutRef.current);
+      isTypingRef.current = false;
+      sendTypingStatus(false); // Stop typing indicator upon send
+      
+      await apiClient.post('/messages/send', payload);
     } catch (err) {
-      console.error("Pipeline failure routing message payload through Kafka endpoint: ", err);
+      console.error("Critical failure during async message propagation loop:", err);
     }
   };
 
   return (
-    <form onSubmit={handleSendMessage} className="h-16 bg-[#f0f2f5] flex items-center px-4 gap-3 border-t border-gray-200 shrink-0">
-      <input 
-        type="text" 
+    <form 
+      onSubmit={handleSendMessage} 
+      className="h-16 bg-[#f0f2f5] px-4 flex items-center gap-3 shrink-0 border-t border-gray-200"
+    >
+      <input
+        type="text"
         value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Type a message..." 
-        className="flex-1 bg-white text-sm py-2.5 px-4 rounded-lg focus:outline-none text-gray-700 shadow-sm placeholder-gray-400"
+        onChange={handleInputChange}
+        placeholder="Type a secure message..."
+        className="flex-1 bg-white py-2.5 px-4 rounded-lg text-sm outline-none border border-transparent focus:border-emerald-400 shadow-sm transition-all"
       />
       <button 
-        type="submit"
-        className="bg-emerald-500 text-white p-2.5 rounded-full shadow-sm hover:bg-emerald-600 active:scale-95 transition-all"
+        type="submit" 
+        className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-6 rounded-lg transition-all active:scale-95 cursor-pointer shadow-md"
       >
-        <svg className="w-4 h-4 transform rotate-90 fill-current" viewBox="0 0 24 24">
-          <path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/>
-        </svg>
+        Send
       </button>
     </form>
   );

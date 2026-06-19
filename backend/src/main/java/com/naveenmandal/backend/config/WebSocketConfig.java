@@ -12,14 +12,12 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // React frontend isi endpoint par real-time connection handshake handle karega
         registry.addEndpoint("/ws-chat")
-                .setAllowedOrigins("*"); // Cross-origin safety override for development
+                .setAllowedOriginPatterns("*"); // FIXED: Safe wildcard mapping
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
-        // Set routing destinations for direct messaging threads
         registry.enableSimpleBroker("/queue", "/topic");
         registry.setApplicationDestinationPrefixes("/app");
         registry.setUserDestinationPrefix("/user");

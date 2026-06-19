@@ -1,32 +1,36 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware'; // Injected for cache layer management
 
-export const useChatStore = create((set) => ({
-  // State initialization
-  currentUser: null,
-  activeChat: null,
-  messages: [],
-  stompClient: null,
+export const useChatStore = create(
+  persist(
+    (set) => ({
+      currentUser: null,
+      activeChat: null,
+      messages: [],
+      stompClient: null,
 
-  // Setters
-  setCurrentUser: (user) => set({ currentUser: user }),
-  
-  setActiveChat: (chat) => set({ activeChat: chat }),
-  
-  setMessages: (messages) => set({ messages }),
-  
-  // Real-time message logic: Ensure immutability for state consistency
-  addMessage: (message) => set((state) => ({ 
-    messages: [...state.messages, message] 
-  })),
-  
-  // WebSocket client setter: Ab `useWebSocket` hook iska control rakhega
-  setStompClient: (client) => set({ stompClient: client }),
-  
-  // Clean shutdown on logout
-  logout: () => set({ 
-    currentUser: null, 
-    activeChat: null, 
-    messages: [], 
-    stompClient: null 
-  })
-}));
+      setCurrentUser: (user) => set({ currentUser: user }),
+      setActiveChat: (chat) => set({ activeChat: chat }),
+      setMessages: (messages) => set({ messages }),
+      
+      addMessage: (message) => set((state) => ({ 
+        messages: [...state.messages, message] 
+      })),
+      
+      setStompClient: (client) => set({ stompClient: client }),
+      
+      logout: () => {
+        set({ currentUser: null, activeChat: null, messages: [], stompClient: null });
+        localStorage.removeItem('whatsapp-cluster-storage'); // Secure purge
+      }
+    }),
+    {
+      name: 'whatsapp-cluster-storage',
+      // CRITICAL: Do NOT serialize active stompClient WebSocket socket instances
+      partialize: (state) => ({
+        currentUser: state.currentUser,
+        activeChat: state.activeChat
+      })
+    }
+  )
+);

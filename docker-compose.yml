@@ -11,7 +11,6 @@ services:
       - mysql_data:/var/lib/mysql
     networks:
       - whatsapp_network
-    # STRICT HEALTHCHECK: Wait for MySQL to accept root connections
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
       interval: 10s
@@ -30,11 +29,14 @@ services:
       - KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER
       - KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
       - KAFKA_OFFERED_CREDENTIALS_CHALLENGE_ALLOWED=true
+      # FIXED: Overriding cluster production defaults to allow single-node offset tracking
+      - KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1
+      - KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1
     ports:
       - "9092:9092"
     networks:
       - whatsapp_network
-    # STRICT HEALTHCHECK: Wait for Kafka KRaft broker APIs to respond
     healthcheck:
       test: ["CMD", "/opt/kafka/bin/kafka-broker-api-versions.sh", "--bootstrap-server", "localhost:9092"]
       interval: 10s
@@ -48,7 +50,6 @@ services:
       - "8080:8080"
     networks:
       - whatsapp_network
-    # HARD LOCK: Backend will strictly wait for DB and Broker health probes to pass
     depends_on:
       whatsapp-db:
         condition: service_healthy

@@ -3,8 +3,9 @@ import { Client } from '@stomp/stompjs';
 import { useChatStore } from '../store/chatStore';
 
 export const useWebSocket = () => {
-  const { currentUser, addMessage, setStompClient } = useChatStore();
-  const clientRef = useRef(null); 
+  const { currentUser, addMessage, setStompClient, activeChat } = useChatStore();
+  const clientRef = useRef(null);
+  const typingSubscriptionRef = useRef(null);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -20,20 +21,32 @@ export const useWebSocket = () => {
     client.onConnect = () => {
       console.log(`Socket pipe mapped safely for user public scope: ${currentUser.publicId}`);
       
-      // FIXED: Switched listener from authenticated /user/ queue to explicit /topic/ channel
+      // 1. Message Subscription Channel
       client.subscribe(`/topic/messages/${currentUser.publicId}`, (payload) => {
         const receivedMessage = JSON.parse(payload.body);
-        
-        // Prevent duplicate appending if the sender is receiving their own broadcast reflection
         if (receivedMessage.senderId !== currentUser.publicId) {
             addMessage(receivedMessage);
         }
       });
+
+      // 2. Typing Indicator Listener
+      if (activeChat?.publicChatId) {
+        typingSubscriptionRef.current = client.subscribe(
+          `/topic/typing/${activeChat.publicChatId}`,
+          (payload) => {
+            const status = JSON.parse(payload.body);
+            if (status.username !== currentUser.username) {
+              // Update local store dynamic state tracking fields
+              useChatStore.setState({ partnerTyping: status.isTyping });
+            }
+          }
+        );
+      }
     };
 
     client.activate();
-    clientRef.current = client; 
-    setStompClient(client); 
+    clientRef.current = client;
+    setStompClient(client);
 
     return () => {
       if (clientRef.current) {
@@ -42,5 +55,5 @@ export const useWebSocket = () => {
         setStompClient(null);
       }
     };
-  }, [currentUser]); 
+  }, [currentUser, activeChat?.publicChatId]); // Re-bind subscriptions when room scope changes
 };
