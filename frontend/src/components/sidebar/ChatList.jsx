@@ -26,8 +26,8 @@ function ChatList() {
 
   const handleSelectUser = async (targetUser) => {
     try {
-      // FIXED: Changed query parameters to pass strict publicId (UUID string tokens) instead of auto-increment numeric database keys
-      const response = await apiClient.post(`/chats?senderId=${currentUser.publicId}&recipientId=${targetUser.publicId}`);
+      // FIX: Changed parameters back to numeric .id properties to align with Long arguments on the backend controller
+      const response = await apiClient.post(`/chats?senderId=${currentUser.id}&recipientId=${targetUser.id}`);
       setActiveChat(response.data);
     } catch (err) {
       console.error("Critical error mapping chat room initialization channel: ", err);

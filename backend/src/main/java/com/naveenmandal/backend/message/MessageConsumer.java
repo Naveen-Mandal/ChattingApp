@@ -9,6 +9,8 @@ import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -24,7 +26,7 @@ public class MessageConsumer {
         log.info("Kafka Consumer intercepted message package for chat room: {}", payload.getPublicChatId());
 
         try {
-            // FIX: Use findChatByPublicIds to handle UUID strings cleanly
+            // Use findChatByPublicIds to handle UUID strings cleanly
             Chat chat = chatRepository.findChatByPublicIds(
                     payload.getSenderId(), 
                     payload.getReceiverId()
@@ -39,8 +41,11 @@ public class MessageConsumer {
                     .status(MessageStatus.SENT)
                     .build();
 
-            messageRepository.save(databaseMessage);
+            Message savedMessage = messageRepository.save(databaseMessage);
             log.info("Message safely saved to relational database tier via Virtual Thread execution.");
+
+            // FIX: Enforce uniform server-side timestamps across the active client network layers
+            payload.setCreatedAt(LocalDateTime.now().toString());
 
             messagingTemplate.convertAndSendToUser(
                     payload.getReceiverId(),
