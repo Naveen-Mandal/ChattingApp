@@ -8,9 +8,11 @@ function ChatList() {
   const { currentUser, setActiveChat, activeChat } = useChatStore();
 
   useEffect(() => {
+    if (!currentUser) return;
+
     apiClient.get('/users')
       .then((response) => {
-        // FIX: Added safe fallback normalization to handle potential mock string-matching variations
+        // Safe fallback normalization to handle potential mock string-matching variations
         const currentPublicId = currentUser?.publicId?.toString();
         const filteredUsers = response.data.filter(u => u.publicId?.toString() !== currentPublicId);
         setUsers(filteredUsers);
@@ -24,7 +26,8 @@ function ChatList() {
 
   const handleSelectUser = async (targetUser) => {
     try {
-      const response = await apiClient.post(`/chats?senderId=${currentUser.id}&recipientId=${targetUser.id}`);
+      // FIXED: Changed query parameters to pass strict publicId (UUID string tokens) instead of auto-increment numeric database keys
+      const response = await apiClient.post(`/chats?senderId=${currentUser.publicId}&recipientId=${targetUser.publicId}`);
       setActiveChat(response.data);
     } catch (err) {
       console.error("Critical error mapping chat room initialization channel: ", err);
@@ -41,8 +44,8 @@ function ChatList() {
         <div className="p-4 text-center text-sm text-gray-400">No alternate contacts found in MySQL.</div>
       ) : (
         users.map((user) => {
-          // FIX: Check if the user is either the sender or recipient of the active conversation entity
-          const isChatActive = activeChat?.sender?.id === user.id || activeChat?.recipient?.id === user.id;
+          // Check if the user matches either the sender or recipient publicId of the active conversation entity
+          const isChatActive = activeChat?.sender?.publicId === user.publicId || activeChat?.recipient?.publicId === user.publicId;
 
           return (
             <div 
@@ -57,7 +60,6 @@ function ChatList() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-baseline">
-                  {/* FIX: Replaced non-existent .name property with .username */}
                   <h3 className="text-sm font-semibold text-gray-800 truncate">{user.username}</h3>
                   <span className="text-xs text-gray-400">Live</span>
                 </div>

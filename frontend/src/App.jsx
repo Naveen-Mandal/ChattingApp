@@ -11,7 +11,7 @@ function App() {
   // Activates the asynchronous bi-directional message consumer pipeline internally 
   useWebSocket();
 
-  // FIXED: Fetch the exact user record from DB to synchronize local state with correct UUIDs
+  // Fetch the exact user record from DB to synchronize local state with correct UUIDs
   const handleMockLogin = (id, name) => {
     apiClient.get('/users')
       .then((res) => {
