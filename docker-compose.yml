@@ -14,7 +14,6 @@ services:
     networks:
       - whatsapp_network
 
-  # NEW: Apache Kafka Setup in KRaft Mode
   whatsapp-kafka:
     image: bitnamilegacy/kafka:latest
     container_name: whatsapp_kafka_container
@@ -45,11 +44,21 @@ services:
       DB_NAME: whatsapp_db
       DB_USER: naveen_developer
       DB_PASSWORD: Naveen123#
-      # NEW: Telling Spring Boot where Kafka is running
       KAFKA_HOST: whatsapp-kafka 
     depends_on:
       - whatsapp-db
-      - whatsapp-kafka # Wait for Kafka to start before Backend starts
+      - whatsapp-kafka
+
+  # React Frontend Layer Container Setup
+  whatsapp-frontend:
+    build: ./frontend
+    container_name: whatsapp_frontend_container
+    ports:
+      - "5173:5173" # Exposes Vite Dev Server port to your localhost browser
+    networks:
+      - whatsapp_network
+    depends_on:
+      - whatsapp-backend # Ensures frontend spins up after API layer boots up
 
 volumes:
   mysql_data_volume:

@@ -5,6 +5,7 @@ import com.naveenmandal.backend.chat.ChatRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,7 @@ public class MessageConsumer {
 
     private final MessageRepository messageRepository;
     private final ChatRepository chatRepository;
+    private final SimpMessagingTemplate messagingTemplate; // NEW: Injects real-time push broker
 
     @KafkaListener(topics = "chat-messages", groupId = "chat-group")
     @Transactional
@@ -22,13 +24,11 @@ public class MessageConsumer {
         log.info("Kafka Consumer intercepted message package for chat room: {}", payload.getPublicChatId());
 
         try {
-            // 1. Resolve relationship mapping reference
             Chat chat = chatRepository.findChatBetweenUserEntity(
-                    Long.parseLong(payload.getSenderId()),
+                    Long.parseLong(payload.getSenderId()), 
                     Long.parseLong(payload.getReceiverId())
-            ).orElseThrow(() -> new IllegalArgumentException("Target chat room lifecycle context missing"));
+            ).orElseThrow(() -> new IllegalArgumentException("Target chat room missing"));
 
-            // 2. Transpile DTO frame to Database Relational Entity
             Message databaseMessage = Message.builder()
                     .chat(chat)
                     .senderId(payload.getSenderId())
@@ -38,13 +38,19 @@ public class MessageConsumer {
                     .status(MessageStatus.SENT)
                     .build();
 
-            // 3. Persist transaction (Handled via application.yml Batch size allocation)
             messageRepository.save(databaseMessage);
-            log.info("Message safely decoupled and saved to relational engine.");
+            log.info("Message safely saved to relational database tier via Virtual Thread execution.");
 
+            // NEW: Instantly pushes payload via WebSocket connection to the targeted active receiver UI
+            messagingTemplate.convertAndSendToUser(
+                    payload.getReceiverId(),
+                    "/queue/messages",
+                    payload
+            );
+            log.info("Live packet dynamically broadcasted over WebSocket mesh to user socket channel.");
+            
         } catch (Exception e) {
-            log.error("Critical failure during async database write loop processing: ", e);
-            // In product companies, failed items are pushed to a Dead Letter Topic (DLT) here
+            log.error("Critical failure during async database write or live transmission broadcast loop: ", e);
         }
     }
 }
