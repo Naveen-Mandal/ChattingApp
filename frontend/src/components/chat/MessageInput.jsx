@@ -14,7 +14,7 @@ function MessageInput() {
     const messageDto = {
       publicChatId: activeChat.id.toString(), // The active shared Chat room ID
       senderId: currentUser.publicId,
-      receiverId: activeChat.id.toString(), // In our logic, activeChat model returns the target User node
+      receiverId: activeChat.recipient?.publicId ?? activeChat.sender?.publicId, // In our logic, activeChat model returns the target User node
       content: text,
       type: 'TEXT'
     };

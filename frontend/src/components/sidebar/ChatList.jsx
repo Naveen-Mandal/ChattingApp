@@ -50,7 +50,7 @@ function ChatList() {
             }`}
           >
             <div className="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-bold text-lg shadow-sm">
-              {user.name[0].toUpperCase()}
+              {user.username[0].toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex justify-between items-baseline">

@@ -1,47 +1,42 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Client } from '@stomp/stompjs';
 import { useChatStore } from '../store/chatStore';
 
 export const useWebSocket = () => {
-  const { currentUser, addMessage, stompClient, setStompClient } = useChatStore();
+  const { currentUser, addMessage, setStompClient } = useChatStore();
+  const clientRef = useRef(null); // Ref use karenge taaki client persistent rahe
 
   useEffect(() => {
-    if (!currentUser || stompClient) return;
+    if (!currentUser) return;
 
-    // Initialize the enterprise STOMP broker client
+    // Pehle se connection hai toh dobara mat banao
+    if (clientRef.current) return;
+
     const client = new Client({
-      brokerURL: 'ws://localhost:8080/ws-chat', 
-      reconnectDelay: 5000, // Safe automated retry loop if network drops
+      brokerURL: 'ws://localhost:8080/ws-chat',
+      reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
-      debug: (str) => console.log('STOMP Core Info: ', str),
     });
 
     client.onConnect = () => {
-      console.log(`Successfully mapped bi-directional socket pipe for user ID: ${currentUser.id}`);
-      
-      // Subscribe strictly to the unique user channel assigned by MessageConsumer.java
+      console.log(`Socket pipe mapped for user: ${currentUser.id}`);
       client.subscribe(`/user/${currentUser.id}/queue/messages`, (payload) => {
         const receivedMessage = JSON.parse(payload.body);
-        
-        // Push message instantly to Zustand store state mesh
         addMessage(receivedMessage);
       });
     };
 
-    client.onStompError = (frame) => {
-      console.error('STOMP Protocol layer malfunctioned: ', frame.headers['message']);
-    };
-
     client.activate();
-    setStompClient(client);
+    clientRef.current = client; // Ref mein store karo
+    setStompClient(client); // Zustand mein set karo
 
-    // Cleanup hook on unmount/logout context switch
     return () => {
-      if (client) {
-        client.deactivate();
+      if (clientRef.current) {
+        clientRef.current.deactivate();
+        clientRef.current = null;
         setStompClient(null);
       }
     };
-  }, [currentUser, stompClient, addMessage, setStompClient]);
+  }, [currentUser]); // dependencies sirf currentUser rakhi
 };
