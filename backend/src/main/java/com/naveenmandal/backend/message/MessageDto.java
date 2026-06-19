@@ -1,18 +1,16 @@
 package com.naveenmandal.backend.message;
 
 import lombok.*;
-import java.io.Serializable;
 
-@Getter
-@Setter
-@AllArgsConstructor
+@Data
+@Builder // <--- Yeh annotation builder error hatati hai
 @NoArgsConstructor
-@Builder
-public class MessageDto implements Serializable {
+@AllArgsConstructor
+public class MessageDto {
     private String publicChatId;
     private String senderId;
     private String receiverId;
     private String content;
-    private String type; 
-    private String createdAt; 
+    private MessageType type;
+    private String createdAt;
 }

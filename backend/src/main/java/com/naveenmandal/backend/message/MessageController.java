@@ -1,6 +1,8 @@
 package com.naveenmandal.backend.message;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -10,30 +12,36 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/messages")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
+@Slf4j
 public class MessageController {
 
     private final MessageProducer messageProducer;
-    private final MessageRepository messageRepository; // FIXED: Injected for DB reads
+    private final MessageService messageService;
 
     @PostMapping("/send")
-    public ResponseEntity<String> sendMessage(@RequestBody MessageDto messageDto) {
+    public ResponseEntity<Void> sendMessage(@RequestBody MessageDto messageDto) {
+        log.info("Queuing message from sender: {}", messageDto.getSenderId());
         messageProducer.sendMessageToQueue(messageDto);
-        return ResponseEntity.ok("Message accepted and queued for asynchronous processing.");
+        return ResponseEntity.accepted().build();
     }
 
-    // FIXED: Added HTTP GET endpoint to fetch chat history dynamically
     @GetMapping("/chat/{chatId}")
-    public ResponseEntity<List<MessageDto>> getMessages(@PathVariable Long chatId) {
-        List<Message> messages = messageRepository.findByChatIdOrderByIdAsc(chatId);
+    public ResponseEntity<List<MessageDto>> getMessages(
+            @PathVariable Long chatId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size
+    ) {
+        log.info("Fetching history for chat: {} | Page: {}", chatId, page);
         
-        // Map Entities to DTOs to ensure clean JSON transmission
+        List<Message> messages = messageService.getMessagesByChatId(chatId, PageRequest.of(page, size));
+
         List<MessageDto> dtos = messages.stream().map(msg -> MessageDto.builder()
                 .publicChatId(msg.getChat().getPublicChatId())
                 .senderId(msg.getSenderId())
                 .receiverId(msg.getReceiverId())
                 .content(msg.getContent())
-                .type(msg.getType().name())
+                // FIXED: Convert String to MessageType Enum
+                .type(msg.getType() != null ? msg.getType() : MessageType.TEXT) 
                 .createdAt(msg.getCreatedAt() != null ? msg.getCreatedAt().toString() : null)
                 .build()
         ).collect(Collectors.toList());
