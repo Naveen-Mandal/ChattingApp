@@ -4,6 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @RestController
 @RequestMapping("/api/messages")
 @RequiredArgsConstructor
@@ -11,15 +14,30 @@ import org.springframework.web.bind.annotation.*;
 public class MessageController {
 
     private final MessageProducer messageProducer;
+    private final MessageRepository messageRepository; // FIXED: Injected for DB reads
 
-    // HTTP Post wrapper that delegates the message handling directly to Kafka topic queues
     @PostMapping("/send")
     public ResponseEntity<String> sendMessage(@RequestBody MessageDto messageDto) {
-
-        // Asynchronously drops the payload into the Kafka cluster
         messageProducer.sendMessageToQueue(messageDto);
-
-        // Instantly returns 200 OK without blocking the server thread for DB I/O write latency
         return ResponseEntity.ok("Message accepted and queued for asynchronous processing.");
+    }
+
+    // FIXED: Added HTTP GET endpoint to fetch chat history dynamically
+    @GetMapping("/chat/{chatId}")
+    public ResponseEntity<List<MessageDto>> getMessages(@PathVariable Long chatId) {
+        List<Message> messages = messageRepository.findByChatIdOrderByIdAsc(chatId);
+        
+        // Map Entities to DTOs to ensure clean JSON transmission
+        List<MessageDto> dtos = messages.stream().map(msg -> MessageDto.builder()
+                .publicChatId(msg.getChat().getPublicChatId())
+                .senderId(msg.getSenderId())
+                .receiverId(msg.getReceiverId())
+                .content(msg.getContent())
+                .type(msg.getType().name())
+                .createdAt(msg.getCreatedAt() != null ? msg.getCreatedAt().toString() : null)
+                .build()
+        ).collect(Collectors.toList());
+
+        return ResponseEntity.ok(dtos);
     }
 }

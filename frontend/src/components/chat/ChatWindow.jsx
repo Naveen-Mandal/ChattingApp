@@ -1,46 +1,43 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useChatStore } from '../../store/chatStore';
+import apiClient from '../../api/apiClient';
 import MessageList from './MessageList';
 import MessageInput from './MessageInput';
-import { useChatStore } from '../../store/chatStore';
 
 function ChatWindow() {
-  const { activeChat, currentUser } = useChatStore();
+  const { activeChat, setMessages } = useChatStore();
 
-  // FIX: Prevent application crash by returning early if no chat is active
-  if (!activeChat) {
-    return (
-      <div className="w-full h-full flex flex-col items-center justify-center bg-[#efeae2] text-gray-500 font-medium text-sm">
-        Select a contact from the sidebar to begin messaging.
-      </div>
-    );
-  }
+  // FIXED: Trigger API call to fetch message history whenever activeChat contextual ID changes
+  useEffect(() => {
+    if (!activeChat) return;
 
-  // FIX: Identify the other user in the room to display their username
-  const chatPartner = activeChat.recipient?.publicId === currentUser?.publicId 
-    ? activeChat.sender 
-    : activeChat.recipient;
-
-  const partnerName = chatPartner?.username || 'Unknown User';
+    apiClient.get(`/messages/chat/${activeChat.id}`)
+      .then(res => {
+        setMessages(res.data);
+        console.log("Chat history hydrated from database:", res.data);
+      })
+      .catch(err => {
+        console.error("Critical error fetching persistent chat history:", err);
+      });
+  }, [activeChat?.id, setMessages]);
 
   return (
-    <div className="w-full h-full flex flex-col justify-between bg-[#efeae2]">
-      {/* Dynamic Header */}
-      <div className="h-16 bg-gray-50 border-b border-gray-200 flex items-center px-4 justify-between shrink-0 shadow-sm z-10">
+    <div className="flex flex-col h-full bg-[#efeae2]">
+      {/* Header section */}
+      <div className="h-16 bg-gray-50 border-b border-gray-200 flex items-center px-6 shrink-0 shadow-sm z-10">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-bold">
-            {partnerName[0].toUpperCase()}
+          <div className="w-10 h-10 bg-emerald-100 text-emerald-700 rounded-full flex items-center justify-center font-bold shadow-sm">
+            {activeChat?.name ? activeChat.name[0].toUpperCase() : 'C'}
           </div>
           <div>
-            <h2 className="text-sm font-semibold text-gray-800">{partnerName}</h2>
-            <p className="text-xs text-emerald-600 font-medium">Virtual Connection Active</p>
+            <h2 className="font-semibold text-gray-800">{activeChat?.name}</h2>
+            <p className="text-xs text-emerald-600">Secure AES Session</p>
           </div>
         </div>
       </div>
 
-      {/* Message Feed Canvas Layer */}
+      {/* Message space */}
       <MessageList />
-
-      {/* Input Action Controller Layer */}
       <MessageInput />
     </div>
   );

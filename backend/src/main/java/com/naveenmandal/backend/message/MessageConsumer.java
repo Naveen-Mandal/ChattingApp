@@ -54,6 +54,8 @@ public class MessageConsumer {
             
         } catch (Exception e) {
             log.error("Critical failure during async database write or live transmission broadcast loop: ", e);
+            
+            throw new RuntimeException("Message processing failed - Requesting Kafka re-delivery", e);
         }
     }
 }
