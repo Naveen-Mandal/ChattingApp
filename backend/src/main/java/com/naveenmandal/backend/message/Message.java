@@ -26,7 +26,7 @@ public class Message {
     private String senderId; // Maps to User's publicId
 
     @Column(nullable = false)
-    private String recipientId; // Maps to User's publicId
+    private String receiverId; // Maps to User's publicId
 
     // length = 10000 ensures large text or base64 text strings don't overflow the column
     @Column(columnDefinition = "TEXT", nullable = false)
