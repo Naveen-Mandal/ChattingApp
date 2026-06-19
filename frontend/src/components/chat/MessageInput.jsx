@@ -10,11 +10,17 @@ function MessageInput() {
     e.preventDefault();
     if (!text.trim()) return;
 
+    // FIX: Verify conversation partner roles so replies don't route back to yourself
+    const targetRecipientId = activeChat.recipient?.publicId === currentUser?.publicId
+      ? activeChat.sender?.publicId
+      : activeChat.recipient?.publicId;
+
     // Package the pure DTO frame
     const messageDto = {
-      publicChatId: activeChat.id.toString(), // The active shared Chat room ID
+      // FIX: Use publicChatId string token to keep messages from disappearing locally
+      publicChatId: activeChat.publicChatId, 
       senderId: currentUser.publicId,
-      receiverId: activeChat.recipient?.publicId ?? activeChat.sender?.publicId, // In our logic, activeChat model returns the target User node
+      receiverId: targetRecipientId,
       content: text,
       type: 'TEXT'
     };
