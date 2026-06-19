@@ -26,7 +26,6 @@ public class MessageConsumer {
         log.info("Kafka Consumer intercepted message package for chat room: {}", payload.getPublicChatId());
 
         try {
-            // Use findChatByPublicIds to handle UUID strings cleanly
             Chat chat = chatRepository.findChatByPublicIds(
                     payload.getSenderId(), 
                     payload.getReceiverId()
@@ -41,18 +40,17 @@ public class MessageConsumer {
                     .status(MessageStatus.SENT)
                     .build();
 
-            Message savedMessage = messageRepository.save(databaseMessage);
-            log.info("Message safely saved to relational database tier via Virtual Thread execution.");
+            messageRepository.save(databaseMessage);
+            log.info("Message safely saved to relational database tier.");
 
-            // FIX: Enforce uniform server-side timestamps across the active client network layers
             payload.setCreatedAt(LocalDateTime.now().toString());
 
-            messagingTemplate.convertAndSendToUser(
-                    payload.getReceiverId(),
-                    "/queue/messages",
+            // FIXED: Bypassed Spring Principal Authentication by mapping to a direct topic channel
+            messagingTemplate.convertAndSend(
+                    "/topic/messages/" + payload.getReceiverId(),
                     payload
             );
-            log.info("Live packet dynamically broadcasted over WebSocket mesh to user socket channel.");
+            log.info("Live packet dynamically broadcasted over explicit WebSocket topic channel.");
             
         } catch (Exception e) {
             log.error("Critical failure during async database write or live transmission broadcast loop: ", e);

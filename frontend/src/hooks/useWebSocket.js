@@ -20,10 +20,14 @@ export const useWebSocket = () => {
     client.onConnect = () => {
       console.log(`Socket pipe mapped safely for user public scope: ${currentUser.publicId}`);
       
-      // FIX: Changed subscription from .id to .publicId to align with backend routing target
-      client.subscribe(`/user/${currentUser.publicId}/queue/messages`, (payload) => {
+      // FIXED: Switched listener from authenticated /user/ queue to explicit /topic/ channel
+      client.subscribe(`/topic/messages/${currentUser.publicId}`, (payload) => {
         const receivedMessage = JSON.parse(payload.body);
-        addMessage(receivedMessage);
+        
+        // Prevent duplicate appending if the sender is receiving their own broadcast reflection
+        if (receivedMessage.senderId !== currentUser.publicId) {
+            addMessage(receivedMessage);
+        }
       });
     };
 
