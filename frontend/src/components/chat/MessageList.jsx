@@ -6,9 +6,9 @@ function MessageList() {
   const { messages, activeChat } = useChatStore();
   const listRef = useRef(null);
 
-  // FIX: Streamlined conversation filtering via unique public room key references
+  // FIX: Streamlined conversation filtering using the unique chat room token
   const filteredMessages = messages.filter(msg => 
-    msg.publicChatId === activeChat.id.toString()
+    msg.publicChatId === activeChat?.publicChatId
   );
 
   useEffect(() => {

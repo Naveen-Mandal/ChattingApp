@@ -10,7 +10,9 @@ function ChatList() {
   useEffect(() => {
     apiClient.get('/users')
       .then((response) => {
-        const filteredUsers = response.data.filter(u => u.publicId !== currentUser.publicId);
+        // FIX: Added safe fallback normalization to handle potential mock string-matching variations
+        const currentPublicId = currentUser?.publicId?.toString();
+        const filteredUsers = response.data.filter(u => u.publicId?.toString() !== currentPublicId);
         setUsers(filteredUsers);
         setLoading(false);
       })
@@ -39,7 +41,7 @@ function ChatList() {
         <div className="p-4 text-center text-sm text-gray-400">No alternate contacts found in MySQL.</div>
       ) : (
         users.map((user) => {
-          // FIX: Correct identification mechanism matching against Chat schema structure
+          // FIX: Check if the user is either the sender or recipient of the active conversation entity
           const isChatActive = activeChat?.sender?.id === user.id || activeChat?.recipient?.id === user.id;
 
           return (
@@ -55,7 +57,7 @@ function ChatList() {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex justify-between items-baseline">
-                  {/* FIX: Replaced user.name with user.username */}
+                  {/* FIX: Replaced non-existent .name property with .username */}
                   <h3 className="text-sm font-semibold text-gray-800 truncate">{user.username}</h3>
                   <span className="text-xs text-gray-400">Live</span>
                 </div>

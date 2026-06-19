@@ -14,4 +14,5 @@ public class MessageDto implements Serializable {
     private String receiverId;
     private String content;
     private String type; // TEXT, IMAGE, etc.
+    private String createdAt;
 }
