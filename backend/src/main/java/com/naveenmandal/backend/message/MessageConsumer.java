@@ -16,7 +16,7 @@ public class MessageConsumer {
 
     private final MessageRepository messageRepository;
     private final ChatRepository chatRepository;
-    private final SimpMessagingTemplate messagingTemplate; // NEW: Injects real-time push broker
+    private final SimpMessagingTemplate messagingTemplate;
 
     @KafkaListener(topics = "chat-messages", groupId = "chat-group")
     @Transactional
@@ -24,9 +24,10 @@ public class MessageConsumer {
         log.info("Kafka Consumer intercepted message package for chat room: {}", payload.getPublicChatId());
 
         try {
-            Chat chat = chatRepository.findChatBetweenUserEntity(
-                    Long.parseLong(payload.getSenderId()), 
-                    Long.parseLong(payload.getReceiverId())
+            // FIX: Use findChatByPublicIds to handle UUID strings cleanly
+            Chat chat = chatRepository.findChatByPublicIds(
+                    payload.getSenderId(), 
+                    payload.getReceiverId()
             ).orElseThrow(() -> new IllegalArgumentException("Target chat room missing"));
 
             Message databaseMessage = Message.builder()
@@ -41,7 +42,6 @@ public class MessageConsumer {
             messageRepository.save(databaseMessage);
             log.info("Message safely saved to relational database tier via Virtual Thread execution.");
 
-            // NEW: Instantly pushes payload via WebSocket connection to the targeted active receiver UI
             messagingTemplate.convertAndSendToUser(
                     payload.getReceiverId(),
                     "/queue/messages",

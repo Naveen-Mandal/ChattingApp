@@ -3,16 +3,14 @@ import { useChatStore } from '../../store/chatStore';
 import MessageBubble from './MessageBubble';
 
 function MessageList() {
-  const { messages, activeChat, currentUser } = useChatStore();
+  const { messages, activeChat } = useChatStore();
   const listRef = useRef(null);
 
-  // Filter messages dynamically belonging to the current conversation scope
+  // FIX: Streamlined conversation filtering via unique public room key references
   const filteredMessages = messages.filter(msg => 
-    (msg.senderId === currentUser.publicId && msg.receiverId === activeChat.id.toString()) ||
-    (msg.senderId === activeChat.id.toString() && msg.receiverId === currentUser.publicId)
+    msg.publicChatId === activeChat.id.toString()
   );
 
-  // Auto scroll to the absolute bottom on receiving new live payloads
   useEffect(() => {
     if (listRef.current) {
       listRef.current.scrollTop = listRef.current.scrollHeight;
