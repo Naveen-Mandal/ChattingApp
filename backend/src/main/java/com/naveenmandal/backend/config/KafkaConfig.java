@@ -65,6 +65,10 @@ public class KafkaConfig {
     }
 
     @Bean
+    public KafkaAdmin kafkaAdmin() {
+        return new KafkaAdmin(commonConfig());
+    }
+    @Bean
     public NewTopic messageTopic() {
         return TopicBuilder.name("chat-messages")
                 .partitions(3)
