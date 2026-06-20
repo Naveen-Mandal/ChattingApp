@@ -35,18 +35,30 @@ public class KafkaConfig {
     @Value("${kafka.password:}")
     private String kafkaPassword;
 
+    // Reads the Aiven CA Certificate string from Render environment variables
+    @Value("${KAFKA_CA_CERT:}")
+    private String caCert;
+
     private Map<String, Object> commonConfig() {
         Map<String, Object> props = new HashMap<>();
         props.put("bootstrap.servers", bootstrapServers);
+        
         if (!"PLAINTEXT".equalsIgnoreCase(securityProtocol)) {
             props.put("security.protocol", securityProtocol);
+            
             if (saslMechanism != null && !saslMechanism.isEmpty()) {
                 props.put("sasl.mechanism", saslMechanism);
             }
+            
             if (kafkaUsername != null && !kafkaUsername.isEmpty() && kafkaPassword != null && !kafkaPassword.isEmpty()) {
                 props.put("sasl.jaas.config",
                         "org.apache.kafka.common.security.scram.ScramLoginModule required username=\""
                         + kafkaUsername + "\" password=\"" + kafkaPassword + "\";");
+            }
+            
+            // CRITICAL: Tells the Kafka client to trust Aiven's custom CA
+            if (caCert != null && !caCert.isEmpty()) {
+                props.put("ssl.truststore.certificates", caCert.trim());
             }
         }
         return props;
