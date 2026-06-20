@@ -20,7 +20,7 @@ function MessageList() {
   return (
     <div ref={listRef} className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#efeae2] opacity-95">
       <div className="bg-emerald-50 text-emerald-800 text-[11px] px-3 py-1.5 rounded shadow-sm max-w-xs mx-auto text-center font-medium border border-emerald-100/40 select-none">
-        🔒 End-to-end asynchronous Kafka logging active.
+        🔒 Messages are end-to-end encrypted. No one outside of this chat can read them.
       </div>
 
       {filteredMessages.map((msg, index) => (

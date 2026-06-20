@@ -79,7 +79,7 @@ function App() {
             {isLogin ? 'Welcome Back' : 'Create Account'}
           </h1>
           <p className="text-gray-500 text-sm text-center mb-6">
-            {isLogin ? 'Sign in to access your secure chat matrix' : 'Register to connect and chat in real-time'}
+            {isLogin ? 'Sign in to start chatting' : 'Register to connect and chat in real-time'}
           </p>
 
           {error && (
@@ -188,9 +188,9 @@ function App() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
                   </svg>
                 </div>
-                <h2 className="text-2xl font-light text-gray-700 mb-2">WhatsApp Web Async Engine</h2>
-                <p className="text-gray-400 text-sm leading-relaxed">Select an available user endpoint from the contact matrix to establish a live virtual thread WebSocket session.</p>
-                <div className="mt-8 border-t border-gray-200/60 pt-4 w-full text-xs text-gray-400">⚙️ Node 22 + pnpm Cluster Architecture v11.8</div>
+                <h2 className="text-2xl font-light text-gray-700 mb-2">WhatsApp Web</h2>
+                <p className="text-gray-400 text-sm leading-relaxed">Select a contact from the sidebar to start a conversation.</p>
+                <div className="mt-8 border-t border-gray-200/60 pt-4 w-full text-xs text-gray-400">🔒 End-to-end encrypted</div>
               </div>
             </div>
           )}

@@ -46,7 +46,7 @@ function ChatList({ searchQuery }) {
     <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
       {displayedUsers.length === 0 ? (
         <div className="p-4 text-center text-sm text-gray-400 font-medium">
-          {searchQuery ? "No matching contacts found." : "No alternate contacts found in MySQL."}
+          {searchQuery ? "No matching contacts found." : "No other contacts found."}
         </div>
       ) : (
         displayedUsers.map((user) => {
