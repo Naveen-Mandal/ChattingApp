@@ -52,6 +52,7 @@ services:
       - DB_HOST=whatsapp-db
       - KAFKA_HOST=whatsapp-kafka
       - REDIS_HOST=whatsapp-redis
+      - JWT_SECRET=${JWT_SECRET}
     networks:
       - whatsapp_network
     depends_on:
