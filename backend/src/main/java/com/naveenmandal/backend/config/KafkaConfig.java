@@ -72,7 +72,7 @@ public class KafkaConfig {
     public NewTopic messageTopic() {
         return TopicBuilder.name("chat-messages")
                 .partitions(3)
-                .replicas(1)
+                .replicas(3)
                 .build();
     }
 
