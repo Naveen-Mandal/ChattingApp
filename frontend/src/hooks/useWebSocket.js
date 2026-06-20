@@ -16,7 +16,7 @@ export const useWebSocket = () => {
 
     const token = localStorage.getItem('whatsapp_token');
     const client = new Client({
-      brokerURL: 'ws://localhost:8080/ws-chat',
+      brokerURL: import.meta.env.VITE_WS_URL || 'ws://localhost:8080/ws-chat',
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
