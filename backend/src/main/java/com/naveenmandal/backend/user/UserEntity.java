@@ -34,11 +34,13 @@ public class UserEntity {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Builder.Default
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private LocalDateTime createdAt = LocalDateTime.now();
 
+    @Builder.Default
     @Column(name = "last_seen", nullable = false)
-    private LocalDateTime lastSeen;
+    private LocalDateTime lastSeen = LocalDateTime.now();
 
     @Column(nullable = false)
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)

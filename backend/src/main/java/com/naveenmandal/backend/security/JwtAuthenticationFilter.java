@@ -53,13 +53,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 }
             }
         } catch (Exception e) {
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.setContentType("text/plain");
-            response.getWriter().write(e.toString() + "\n");
-            for (StackTraceElement element : e.getStackTrace()) {
-                response.getWriter().write("\tat " + element.toString() + "\n");
-            }
-            return;
+            // Log security parsing error and proceed (requests will naturally fail if endpoint requires authentication)
+            logger.error("Could not set user authentication in security context", e);
         }
 
         filterChain.doFilter(request, response);

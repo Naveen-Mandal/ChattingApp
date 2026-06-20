@@ -8,9 +8,10 @@ export const useChatStore = create(
       activeChat: null,
       messages: [],
       stompClient: null,
+      partnerTyping: false,
 
       setCurrentUser: (user) => set({ currentUser: user }),
-      setActiveChat: (chat) => set({ activeChat: chat }),
+      setActiveChat: (chat) => set({ activeChat: chat, partnerTyping: false }),
       setMessages: (messages) => set({ messages }),
       
       addMessage: (message) => set((state) => ({ 
@@ -20,7 +21,7 @@ export const useChatStore = create(
       setStompClient: (client) => set({ stompClient: client }),
       
       logout: () => {
-        set({ currentUser: null, activeChat: null, messages: [], stompClient: null });
+        set({ currentUser: null, activeChat: null, messages: [], stompClient: null, partnerTyping: false });
         localStorage.removeItem('whatsapp-cluster-storage'); // Secure purge
         localStorage.removeItem('whatsapp_token');
       }
