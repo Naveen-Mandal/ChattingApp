@@ -3,9 +3,9 @@ spring:
     name: backend
 
   datasource:
-    url: jdbc:mysql://${DB_HOST}:${DB_PORT}/${DB_NAME}?createDatabaseIfNotExist=true&useSSL=true&requireSSL=true&allowPublicKeyRetrieval=true
-    username: ${DB_USER}
-    password: ${DB_PASSWORD}
+    url: ${DB_URL:jdbc:mysql://whatsapp-db:3306/whatsapp_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true}
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -15,6 +15,7 @@ spring:
     open-in-view: false
     properties:
       hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
         jdbc:
           batch_size: 25
         order_inserts: true
@@ -25,15 +26,15 @@ spring:
       enabled: true
 
   kafka:
-    bootstrap-servers: ${KAFKA_HOST}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:whatsapp-kafka:9092}
 
   data:
     redis:
-      host: ${REDIS_HOST}
-      port: ${REDIS_PORT}
-      password: ${REDIS_PASSWORD}
+      host: ${REDIS_HOST:whatsapp-redis}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
       ssl:
-        enabled: true
+        enabled: ${REDIS_SSL_ENABLED:false}
 
   cache:
     type: redis
@@ -42,8 +43,12 @@ app:
   jwt:
     secret: ${JWT_SECRET}
   cors:
-    allowed-origins: ${CORS_ORIGIN}
+    allowed-origins: ${CORS_ORIGIN:http://localhost:5173}
 
 kafka:
-  username: ${KAFKA_USERNAME}
-  password: ${KAFKA_PASSWORD}
+  security:
+    protocol: ${KAFKA_SECURITY_PROTOCOL:PLAINTEXT}
+  sasl:
+    mechanism: ${KAFKA_SASL_MECHANISM:}
+  username: ${KAFKA_USERNAME:}
+  password: ${KAFKA_PASSWORD:}

@@ -23,6 +23,35 @@ public class KafkaConfig {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
+    @Value("${kafka.security.protocol:PLAINTEXT}")
+    private String securityProtocol;
+
+    @Value("${kafka.sasl.mechanism:}")
+    private String saslMechanism;
+
+    @Value("${kafka.username:}")
+    private String kafkaUsername;
+
+    @Value("${kafka.password:}")
+    private String kafkaPassword;
+
+    private Map<String, Object> commonConfig() {
+        Map<String, Object> props = new HashMap<>();
+        props.put("bootstrap.servers", bootstrapServers);
+        if (!"PLAINTEXT".equalsIgnoreCase(securityProtocol)) {
+            props.put("security.protocol", securityProtocol);
+            if (saslMechanism != null && !saslMechanism.isEmpty()) {
+                props.put("sasl.mechanism", saslMechanism);
+            }
+            if (kafkaUsername != null && !kafkaUsername.isEmpty() && kafkaPassword != null && !kafkaPassword.isEmpty()) {
+                props.put("sasl.jaas.config",
+                        "org.apache.kafka.common.security.scram.ScramLoginModule required username=\""
+                        + kafkaUsername + "\" password=\"" + kafkaPassword + "\";");
+            }
+        }
+        return props;
+    }
+
     @Bean
     public NewTopic messageTopic() {
         return TopicBuilder.name("chat-messages")
@@ -33,13 +62,12 @@ public class KafkaConfig {
 
     @Bean
     public ProducerFactory<String, Object> producerFactory() {
-        Map<String, Object> configProps = new HashMap<>();
-        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+        Map<String, Object> props = commonConfig();
+        props.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        props.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
                 "org.springframework.kafka.support.serializer.JsonSerializer");
-        configProps.put(ProducerConfig.ACKS_CONFIG, "all");
-        return new DefaultKafkaProducerFactory<>(configProps);
+        props.put(ProducerConfig.ACKS_CONFIG, "all");
+        return new DefaultKafkaProducerFactory<>(props);
     }
 
     @Bean
@@ -49,18 +77,16 @@ public class KafkaConfig {
 
     @Bean
     public ConsumerFactory<String, Object> consumerFactory() {
-        Map<String, Object> configProps = new HashMap<>();
-        configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "chat-group");
-        configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
-        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+        Map<String, Object> props = commonConfig();
+        props.put(ConsumerConfig.GROUP_ID_CONFIG, "chat-group");
+        props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        props.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        props.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
                 "org.springframework.kafka.support.serializer.JsonDeserializer");
-        // Raw string keys — no import needed, no deprecated class reference
-        configProps.put("spring.json.trusted.packages", "*");
-        configProps.put("spring.json.value.default.type",
+        props.put("spring.json.trusted.packages", "*");
+        props.put("spring.json.value.default.type",
                 "com.naveenmandal.backend.message.MessageDto");
-        return new DefaultKafkaConsumerFactory<>(configProps);
+        return new DefaultKafkaConsumerFactory<>(props);
     }
 
     @Bean
