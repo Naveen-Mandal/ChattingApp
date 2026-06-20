@@ -48,6 +48,10 @@ services:
     container_name: whatsapp_backend_container
     ports:
       - "8080:8080"
+    environment:
+      - DB_HOST=whatsapp-db
+      - KAFKA_HOST=whatsapp-kafka
+      - REDIS_HOST=whatsapp-redis
     networks:
       - whatsapp_network
     depends_on:
@@ -55,6 +59,21 @@ services:
         condition: service_healthy
       whatsapp-kafka:
         condition: service_healthy
+      whatsapp-redis:
+        condition: service_healthy
+
+  whatsapp-redis:
+    image: redis:7.2-alpine
+    container_name: whatsapp_redis_container
+    ports:
+      - "6379:6379"
+    networks:
+      - whatsapp_network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   whatsapp-frontend:
     build: ./frontend

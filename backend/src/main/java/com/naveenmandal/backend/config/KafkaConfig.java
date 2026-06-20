@@ -12,8 +12,6 @@ import org.springframework.kafka.annotation.EnableKafka;
 import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.*;
-import org.springframework.kafka.support.serializer.JsonDeserializer;
-import org.springframework.kafka.support.serializer.JsonSerializer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,21 +25,20 @@ public class KafkaConfig {
 
     @Bean
     public NewTopic messageTopic() {
-        // Topic creation at cluster boot-time
         return TopicBuilder.name("chat-messages")
                 .partitions(3)
                 .replicas(1)
                 .build();
     }
 
-    // Producer Factory: Handles data transmission from Backend -> Kafka
     @Bean
     public ProducerFactory<String, Object> producerFactory() {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        configProps.put(ProducerConfig.ACKS_CONFIG, "all"); // High durability guarantee
+        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
+                "org.springframework.kafka.support.serializer.JsonSerializer");
+        configProps.put(ProducerConfig.ACKS_CONFIG, "all");
         return new DefaultKafkaProducerFactory<>(configProps);
     }
 
@@ -50,27 +47,26 @@ public class KafkaConfig {
         return new KafkaTemplate<>(producerFactory());
     }
 
-    // Consumer Factory: Handles data retrieval from Kafka -> Consumer
     @Bean
     public ConsumerFactory<String, Object> consumerFactory() {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
         configProps.put(ConsumerConfig.GROUP_ID_CONFIG, "chat-group");
         configProps.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
-        
-        JsonDeserializer<Object> deserializer = new JsonDeserializer<>();
-        deserializer.addTrustedPackages("*"); // Trust all DTO packets coming from the stream
-
-        return new DefaultKafkaConsumerFactory<>(
-            configProps, 
-            new StringDeserializer(), 
-            deserializer
-        );
+        configProps.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class);
+        configProps.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG,
+                "org.springframework.kafka.support.serializer.JsonDeserializer");
+        // Raw string keys — no import needed, no deprecated class reference
+        configProps.put("spring.json.trusted.packages", "*");
+        configProps.put("spring.json.value.default.type",
+                "com.naveenmandal.backend.message.MessageDto");
+        return new DefaultKafkaConsumerFactory<>(configProps);
     }
 
     @Bean
     public ConcurrentKafkaListenerContainerFactory<String, Object> kafkaListenerContainerFactory() {
-        ConcurrentKafkaListenerContainerFactory<String, Object> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        ConcurrentKafkaListenerContainerFactory<String, Object> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
         factory.setConsumerFactory(consumerFactory());
         return factory;
     }

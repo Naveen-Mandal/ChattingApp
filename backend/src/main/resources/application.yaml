@@ -26,3 +26,11 @@ spring:
 
   kafka:
     bootstrap-servers: ${KAFKA_HOST:whatsapp-kafka}:9092
+
+  data:
+    redis:
+      host: ${REDIS_HOST:whatsapp-redis}
+      port: ${REDIS_PORT:6379}
+
+  cache:
+    type: redis

@@ -1,6 +1,7 @@
 package com.naveenmandal.backend.user;
 
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -38,6 +39,10 @@ public class UserEntity {
 
     @Column(name = "last_seen", nullable = false)
     private LocalDateTime lastSeen;
+
+    @Column(nullable = false)
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String password;
 
 
     @PrePersist  //it will run this method just before inserting data into db.

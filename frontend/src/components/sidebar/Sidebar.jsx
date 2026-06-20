@@ -1,14 +1,15 @@
-import React from 'react';
+import React, { useState } from 'react';
 import SearchBar from './SearchBar';
 import ChatList from './ChatList';
 import { useChatStore } from '../../store/chatStore';
 
 function Sidebar() {
   const { currentUser, logout } = useChatStore();
+  const [searchQuery, setSearchQuery] = useState('');
 
   // FIXED: Safe dynamic fallback variable parsing to completely eliminate undefined property extraction crashes
   const userDisplayName = currentUser?.name || currentUser?.username || 'User';
-  const displayInitial = userDisplayName[0].toUpperCase();
+  const displayInitial = userDisplayName ? userDisplayName[0].toUpperCase() : 'U';
 
   return (
     <div className="w-full md:w-[35%] lg:w-[30%] border-r border-gray-200 flex flex-col bg-white h-full">
@@ -26,8 +27,8 @@ function Sidebar() {
           Logout
         </button>
       </div>
-      <SearchBar />
-      <ChatList />
+      <SearchBar searchQuery={searchQuery} setSearchQuery={setSearchQuery} />
+      <ChatList searchQuery={searchQuery} />
     </div>
   );
 }

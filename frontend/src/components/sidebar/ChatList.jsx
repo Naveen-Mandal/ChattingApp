@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import apiClient from '../../api/apiClient';
 import { useChatStore } from '../../store/chatStore';
 
-function ChatList() {
+function ChatList({ searchQuery }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const { currentUser, setActiveChat, activeChat } = useChatStore();
@@ -34,16 +34,22 @@ function ChatList() {
     }
   };
 
+  const displayedUsers = users.filter((user) =>
+    user.username?.toLowerCase().includes((searchQuery || '').toLowerCase())
+  );
+
   if (loading) {
     return <div className="p-4 text-center text-sm text-gray-400 animate-pulse">Loading active contacts...</div>;
   }
 
   return (
     <div className="flex-1 overflow-y-auto divide-y divide-gray-100">
-      {users.length === 0 ? (
-        <div className="p-4 text-center text-sm text-gray-400">No alternate contacts found in MySQL.</div>
+      {displayedUsers.length === 0 ? (
+        <div className="p-4 text-center text-sm text-gray-400 font-medium">
+          {searchQuery ? "No matching contacts found." : "No alternate contacts found in MySQL."}
+        </div>
       ) : (
-        users.map((user) => {
+        displayedUsers.map((user) => {
           // Check if the user matches either the sender or recipient publicId of the active conversation entity
           const isChatActive = activeChat?.sender?.publicId === user.publicId || activeChat?.recipient?.publicId === user.publicId;
 

@@ -36,7 +36,7 @@ public class MessageConsumer {
                     .senderId(payload.getSenderId())
                     .receiverId(payload.getReceiverId())
                     .content(payload.getContent())
-                    .type(MessageType.valueOf(payload.getType()))
+                    .type(payload.getType())
                     .status(MessageStatus.SENT)
                     .build();
 

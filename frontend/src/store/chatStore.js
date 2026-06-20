@@ -22,6 +22,7 @@ export const useChatStore = create(
       logout: () => {
         set({ currentUser: null, activeChat: null, messages: [], stompClient: null });
         localStorage.removeItem('whatsapp-cluster-storage'); // Secure purge
+        localStorage.removeItem('whatsapp_token');
       }
     }),
     {

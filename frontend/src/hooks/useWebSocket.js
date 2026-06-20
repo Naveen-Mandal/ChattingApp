@@ -11,11 +11,15 @@ export const useWebSocket = () => {
     if (!currentUser) return;
     if (clientRef.current) return;
 
+    const token = localStorage.getItem('whatsapp_token');
     const client = new Client({
       brokerURL: 'ws://localhost:8080/ws-chat',
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
+      connectHeaders: {
+        Authorization: token ? `Bearer ${token}` : '',
+      },
     });
 
     client.onConnect = () => {
