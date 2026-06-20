@@ -56,9 +56,9 @@ public class KafkaConfig {
                         + kafkaUsername + "\" password=\"" + kafkaPassword + "\";");
             }
             
-            // CRITICAL: Tells the Kafka client to trust Aiven's custom CA
             if (caCert != null && !caCert.isEmpty()) {
                 props.put("ssl.truststore.certificates", caCert.trim());
+                props.put("ssl.truststore.type", "PEM"); // 👈 ADD THIS LINE
             }
         }
         return props;
