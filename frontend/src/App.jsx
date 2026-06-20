@@ -59,7 +59,13 @@ function App() {
       }
     } catch (err) {
       console.error("Auth error:", err);
-      setError(err.response?.data || 'Authentication failed. Please verify credentials.');
+      let errMsg = err.response?.data?.error || err.response?.data?.message || err.response?.data || 'Authentication failed. Please verify credentials.';
+      if (typeof errMsg === 'object') {
+        errMsg = Object.entries(errMsg)
+          .map(([key, val]) => `${val}`)
+          .join(', ');
+      }
+      setError(errMsg);
     } finally {
       setLoading(false);
     }
