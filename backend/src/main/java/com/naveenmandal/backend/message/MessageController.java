@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,6 +27,7 @@ public class MessageController {
     }
 
     @GetMapping("/chat/{chatId}")
+    @Transactional(readOnly = true)
     public ResponseEntity<List<MessageDto>> getMessages(
             @PathVariable Long chatId,
             @RequestParam(defaultValue = "0") int page,
@@ -43,9 +45,23 @@ public class MessageController {
                 // FIXED: Convert String to MessageType Enum
                 .type(msg.getType() != null ? msg.getType() : MessageType.TEXT) 
                 .createdAt(msg.getCreatedAt() != null ? msg.getCreatedAt().toString() : null)
+                .status(msg.getStatus())
                 .build()
         ).collect(Collectors.toList());
 
+        // Reverse to ensure history is ordered chronologically (oldest to newest) on UI
+        java.util.Collections.reverse(dtos);
+
         return ResponseEntity.ok(dtos);
+    }
+
+    @PostMapping("/chat/{chatId}/read")
+    public ResponseEntity<Void> markMessagesAsRead(
+            @PathVariable Long chatId,
+            @RequestParam String userId
+    ) {
+        log.info("Marking messages as read in chat: {} for user: {}", chatId, userId);
+        messageService.markMessagesAsRead(chatId, userId);
+        return ResponseEntity.ok().build();
     }
 }

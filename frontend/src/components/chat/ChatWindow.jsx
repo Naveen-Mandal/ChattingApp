@@ -12,17 +12,20 @@ function ChatWindow() {
 
   // HYDRATION LOOP: Active chat badalte hi yeh database history tier se older messages restore karega
   useEffect(() => {
-    if (!activeChat?.id) return;
+    if (!activeChat?.id || !currentUser?.publicId) return;
 
     apiClient.get(`/messages/chat/${activeChat.id}`)
       .then((res) => {
         setMessages(res.data);
         console.log("Chat conversation canvas hydrated successfully with history.");
+        // Persist read status (seen ticks) on backend
+        apiClient.post(`/messages/chat/${activeChat.id}/read?userId=${currentUser.publicId}`)
+          .catch((readErr) => console.error("Error marking messages as read:", readErr));
       })
       .catch((err) => {
         console.error("History sync runtime error: ", err);
       });
-  }, [activeChat?.id, setMessages]);
+  }, [activeChat?.id, currentUser?.publicId, setMessages]);
 
   // Early exit boundary to prevent runtime UI property crashes if no chat is active
   if (!activeChat) {

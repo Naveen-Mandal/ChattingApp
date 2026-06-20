@@ -15,6 +15,26 @@ function MessageBubble({ msg }) {
     }
   };
 
+  const renderTicks = () => {
+    if (!isSentByMe) return null;
+    if (msg.status === 'SENDING') {
+      return <span className="text-gray-400 font-light text-[10px] animate-pulse">🕒</span>;
+    }
+    if (msg.status === 'FAILED') {
+      return <span className="text-red-500 font-bold text-[10px]" title="Failed to send">⚠️</span>;
+    }
+    if (msg.status === 'SENT') {
+      return <span className="text-gray-400 font-medium">✓</span>;
+    }
+    if (msg.status === 'RECEIVED') {
+      return <span className="text-gray-400 font-bold">✓✓</span>;
+    }
+    if (msg.status === 'SEEN') {
+      return <span className="text-sky-500 font-bold">✓✓</span>;
+    }
+    return <span className="text-gray-400 font-medium">✓</span>;
+  };
+
   return (
     <div className={`flex w-full ${isSentByMe ? 'justify-end' : 'justify-start'}`}>
       <div className={`max-w-[65%] rounded-lg px-3 py-1.5 shadow-sm relative text-sm text-gray-800 ${
@@ -27,9 +47,7 @@ function MessageBubble({ msg }) {
         <div className="absolute bottom-1 right-2 flex items-center gap-1 text-[10px] text-gray-400 select-none">
           {/* FIX: Dynamic runtime time injection */}
           <span>{formatTime()}</span>
-          {isSentByMe && (
-            <span className="text-sky-500 font-bold">✓✓</span>
-          )}
+          {renderTicks()}
         </div>
       </div>
     </div>

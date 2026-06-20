@@ -9,13 +9,13 @@ function MessageInput() {
   const isTypingRef = useRef(false);
 
   // Path B Feature: WebSocket emit trigger for real-time typing indicators
-  const sendTypingStatus = (isTyping) => {
+  const sendTypingStatus = (typing) => {
     if (stompClient && stompClient.connected && activeChat) {
       stompClient.publish({
         destination: `/app/typing/${activeChat.publicChatId}`,
         body: JSON.stringify({ 
           username: currentUser.name || currentUser.username, 
-          isTyping 
+          typing 
         })
       });
     }
@@ -70,8 +70,27 @@ function MessageInput() {
       sendTypingStatus(false); // Stop typing indicator upon send
       
       await apiClient.post('/messages/send', payload);
+
+      // Update optimistic message status to SENT
+      const currentMessages = useChatStore.getState().messages;
+      const updatedMessages = currentMessages.map(msg => {
+        if (msg.id === optimisticMessage.id) {
+          return { ...msg, status: 'SENT' };
+        }
+        return msg;
+      });
+      useChatStore.setState({ messages: updatedMessages });
     } catch (err) {
       console.error("Critical failure during async message propagation loop:", err);
+      // Mark optimistic message as FAILED
+      const currentMessages = useChatStore.getState().messages;
+      const updatedMessages = currentMessages.map(msg => {
+        if (msg.id === optimisticMessage.id) {
+          return { ...msg, status: 'FAILED' };
+        }
+        return msg;
+      });
+      useChatStore.setState({ messages: updatedMessages });
     }
   };
 

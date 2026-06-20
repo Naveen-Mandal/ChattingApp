@@ -16,7 +16,7 @@ public class UserService {
     private final UserEntityRepository userRepository;
 
     @Transactional(readOnly = true)
-    @Cacheable(value = "users")
+    // @Cacheable(value = "users")
     public List<UserEntity> getAllUsers() {
         return userRepository.findAll();
     }

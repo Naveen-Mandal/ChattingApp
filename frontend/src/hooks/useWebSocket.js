@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Client } from '@stomp/stompjs';
 import { useChatStore } from '../store/chatStore';
+import apiClient from '../api/apiClient';
 
 export const useWebSocket = () => {
   const { currentUser, addMessage, setStompClient, activeChat } = useChatStore();
@@ -32,7 +33,30 @@ export const useWebSocket = () => {
       client.subscribe(`/topic/messages/${currentUser.publicId}`, (payload) => {
         const receivedMessage = JSON.parse(payload.body);
         if (receivedMessage.senderId !== currentUser.publicId) {
+          const currentActiveChat = useChatStore.getState().activeChat;
+          if (currentActiveChat && receivedMessage.publicChatId === currentActiveChat.publicChatId) {
+            receivedMessage.status = 'SEEN';
             addMessage(receivedMessage);
+            apiClient.post(`/messages/chat/${currentActiveChat.id}/read?userId=${currentUser.publicId}`)
+              .catch(err => console.error("Failed to post read receipt: ", err));
+          } else {
+            addMessage(receivedMessage);
+          }
+        }
+      });
+
+      // Status Updates Channel (read receipts / blue ticks)
+      client.subscribe(`/topic/status/${currentUser.publicId}`, (payload) => {
+        const update = JSON.parse(payload.body);
+        if (update.type === 'READ_RECEIPT') {
+          const messages = useChatStore.getState().messages;
+          const updatedMessages = messages.map(msg => {
+            if (msg.publicChatId === update.publicChatId && msg.senderId === currentUser.publicId) {
+              return { ...msg, status: 'SEEN' };
+            }
+            return msg;
+          });
+          useChatStore.setState({ messages: updatedMessages });
         }
       });
     };
@@ -75,10 +99,9 @@ export const useWebSocket = () => {
         `/topic/typing/${activeChat.publicChatId}`,
         (payload) => {
           const status = JSON.parse(payload.body);
-          // Check username match safely (supporting name/username fallbacks)
           const currentUsername = currentUser.name || currentUser.username;
           if (status.username !== currentUsername) {
-            useChatStore.setState({ partnerTyping: status.isTyping });
+            useChatStore.setState({ partnerTyping: status.typing });
           }
         }
       );

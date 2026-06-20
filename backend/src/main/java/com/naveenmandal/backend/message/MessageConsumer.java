@@ -44,6 +44,7 @@ public class MessageConsumer {
             log.info("Message safely saved to relational database tier.");
 
             payload.setCreatedAt(LocalDateTime.now().toString());
+            payload.setStatus(MessageStatus.SENT);
 
             // FIXED: Bypassed Spring Principal Authentication by mapping to a direct topic channel
             messagingTemplate.convertAndSend(

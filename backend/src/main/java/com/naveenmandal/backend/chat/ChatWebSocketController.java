@@ -25,6 +25,6 @@ public class ChatWebSocketController {
     @AllArgsConstructor
     public static class TypingStatus {
         private String username;
-        private boolean isTyping;
+        private boolean typing;
     }
 }

@@ -13,4 +13,5 @@ public class MessageDto {
     private String content;
     private MessageType type;
     private String createdAt;
+    private MessageStatus status;
 }

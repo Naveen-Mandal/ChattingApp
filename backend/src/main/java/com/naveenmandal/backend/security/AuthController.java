@@ -7,7 +7,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -22,35 +21,10 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
-    private final CustomUserDetailsService userDetailsService;
 
     @GetMapping("/health")
     public ResponseEntity<String> health() {
         return ResponseEntity.ok("UP");
-    }
-
-    @GetMapping("/debug-token")
-    public ResponseEntity<?> debugToken(@RequestParam String token) {
-        try {
-            String username = jwtService.extractUsername(token);
-            UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-            boolean isValid = jwtService.isTokenValid(token, userDetails);
-            
-            return ResponseEntity.ok(java.util.Map.of(
-                "username", username,
-                "userDetailsUsername", userDetails.getUsername(),
-                "isValid", isValid,
-                "userDetailsAuthorities", userDetails.getAuthorities()
-            ));
-        } catch (Exception e) {
-            java.io.StringWriter sw = new java.io.StringWriter();
-            java.io.PrintWriter pw = new java.io.PrintWriter(sw);
-            e.printStackTrace(pw);
-            return ResponseEntity.ok(java.util.Map.of(
-                "error", e.toString(),
-                "stackTrace", sw.toString()
-            ));
-        }
     }
 
     @PostMapping("/register")
