@@ -16,13 +16,12 @@ public class UserService {
     private final UserEntityRepository userRepository;
 
     @Transactional(readOnly = true)
-    // @Cacheable(value = "users")
     public List<UserEntity> getAllUsers() {
         return userRepository.findAll();
     }
 
     @Transactional
-    @CacheEvict(value = "users", allEntries = true)
+    @CacheEvict(value = "users", key = "#user.publicId")
     public UserEntity saveUser(UserEntity user) {
         return userRepository.save(user);
     }
@@ -38,6 +37,7 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "users", key = "#publicId")
     public Optional<UserEntity> findByPublicId(String publicId) {
         return userRepository.findByPublicId(publicId);
     }
