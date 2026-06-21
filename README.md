@@ -14,6 +14,7 @@ The following diagram illustrates the decoupled, event-driven data flow and auth
 graph TD
     Client[React Client - Zustand / Stomp.js]
     Gateway[Spring Security - JWT Filter]
+    AuthService[CustomUserDetailsService]
     WS[WebSocket Broker - STOMP]
     KafkaProducer[Kafka Producer - chat-messages]
     KafkaBroker[Apache Kafka Broker]
@@ -22,17 +23,22 @@ graph TD
     Redis[(Redis Cache - users)]
     
     Client -->|1. HTTP Auth / API Requests| Gateway
-    Client -->|2. Secure WS Handshake CONNECT| WS
-    Gateway -->|3. Validate Token| Redis
-    WS -->|4. Authenticate STOMP Connection| WS
-    Client -->|5. Send Message HTTP| Gateway
-    Gateway -->|6. Publish Event| KafkaProducer
-    KafkaProducer -->|7. Stream Message| KafkaBroker
-    KafkaBroker -->|8. Consume Event| KafkaConsumer
-    KafkaConsumer -->|9. Persist Message Async| MySQL
-    KafkaConsumer -->|10. Broadcast Live Msg via WS| Client
-    Client -->|11. Emit Typing status WS| WS
-    WS -->|12. Broadcast Typing Status| Client
+    Gateway -->|2. Cryptographic JWT Verification| Gateway
+    Gateway -->|3. Load User Credentials| AuthService
+    AuthService -->|4. Query User| MySQL
+    Client -->|5. Secure WS Handshake CONNECT| WS
+    WS -->|6. Authenticate STOMP Connection| WS
+    Client -->|7. Send Message HTTP| Gateway
+    Gateway -->|8. Publish Event| KafkaProducer
+    KafkaProducer -->|9. Stream Message| KafkaBroker
+    KafkaBroker -->|10. Consume Event| KafkaConsumer
+    KafkaConsumer -->|11. Persist Message Async| MySQL
+    KafkaConsumer -->|12. Broadcast Live Msg via WS| Client
+    Client -->|13. Emit Typing status WS| WS
+    WS -->|14. Broadcast Typing Status| Client
+    Client -->|15. Fetch Active Chat / Contacts| MySQL
+    Client -->|16. Read Profiles key-value| Redis
+    Redis -->|17. Cache Fallback| MySQL
 ```
 
 ---
@@ -72,9 +78,10 @@ graph TD
 * [Docker & Docker Compose](https://www.docker.com/products/docker-desktop/) installed.
 
 ### Step 1: Clone and Configure Environment Files
-1. Create a `.env` file in the **project root directory**:
+1. Create a `.env` file in the **project root directory** (do not commit this file to public repositories):
    ```env
-   JWT_SECRET=404E635266556A586E3272357538782F413F4428472B4B6250655368566D5971
+   # Generate a secure 256-bit hexadecimal string using: openssl rand -hex 32
+   JWT_SECRET=<YOUR_SECURE_RANDOM_JWT_SECRET>
    ```
 
 ### Step 2: Spin Up Containers
