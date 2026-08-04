@@ -50,6 +50,7 @@ graph TD
 * **Granular Key-Value Caching (Redis)**: Individual user profile records are cached using `@Cacheable` keyed on their unique `publicId`. Updates trigger an O(1) `@CacheEvict`, eliminating global list invalidation anti-patterns.
 * **Virtual Threads (Project Loom)**: Enabled Spring Boot 3 virtual threads to efficiently handle blocking JDBC database queries and prevent tomcat servlet execution pool starvation under heavy loads.
 * **Centralized Exception Handling & Input Validation**: REST boundaries enforce JSR-380 input rules (`@NotBlank`, `@Size`, `@Email`) while custom validation failures are structured and returned to clients via a global `@RestControllerAdvice` handler, hiding internal stack traces.
+* **Cloud Keep-Alive & Connection Stability Tuning**: Ready-to-go resilience configuration for cloud hosting providers (e.g., Aiven). Utilizes Lettuce connection pooling with eviction scans every 30 seconds to refresh Redis links. Extends Kafka consumer timeouts (`session.timeout.ms = 45000`, `heartbeat.interval.ms = 15000`) to guarantee socket stability through idle periods.
 * **Optimized React Store & Sockets**: Zustand handles reactive UI states. Real-time typing indicators are decoupled from connection lifecycles; changing chats unsubscribes from the old STOMP indicator topic and binds to the new one dynamically without socket reconnection overhead.
 
 ---

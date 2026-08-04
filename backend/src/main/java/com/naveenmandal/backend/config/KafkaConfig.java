@@ -58,7 +58,7 @@ public class KafkaConfig {
             
             if (caCert != null && !caCert.isEmpty()) {
                 props.put("ssl.truststore.certificates", caCert.trim());
-                props.put("ssl.truststore.type", "PEM"); // 👈 ADD THIS LINE
+                props.put("ssl.truststore.type", "PEM"); 
             }
         }
         return props;
@@ -102,6 +102,13 @@ public class KafkaConfig {
         props.put("spring.json.trusted.packages", "*");
         props.put("spring.json.value.default.type",
                 "com.naveenmandal.backend.message.MessageDto");
+        
+        // Managed cloud keep-alive and connection stability tuning
+        props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, 45000);      // 45 seconds session timeout
+        props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, 15000);    // 15 seconds heartbeat interval
+        props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, 300000);    // 5 minutes max poll interval
+        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, 500);           // Max poll records batch size
+        
         return new DefaultKafkaConsumerFactory<>(props);
     }
 
