@@ -4,7 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
-import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration.LettuceClientConfigurationBuilder;
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.connection.lettuce.LettucePoolingClientConfiguration;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -34,13 +34,14 @@ public class RedisConfig {
         }
 
         // Configure Lettuce Pooling explicitly to ensure connections stay alive
-        LettucePoolingClientConfiguration poolConfig = LettuceClientConfigurationBuilder.builder()
-                .poolConfig()
-                .minIdle(2)
-                .maxIdle(8)
-                .maxActive(8)
-                .maxWait(Duration.ofMillis(-1))
-                .timeBetweenEvictionRuns(Duration.ofSeconds(30))
+        GenericObjectPoolConfig<?> genericPoolConfig = new GenericObjectPoolConfig<>();
+        genericPoolConfig.setMinIdle(2);
+        genericPoolConfig.setMaxIdle(8);
+        genericPoolConfig.setMaxTotal(8);
+        genericPoolConfig.setTimeBetweenEvictionRuns(Duration.ofSeconds(30));
+
+        LettucePoolingClientConfiguration poolConfig = LettucePoolingClientConfiguration.builder()
+                .poolConfig(genericPoolConfig)
                 .build();
 
         return new LettuceConnectionFactory(standaloneConfig, poolConfig);

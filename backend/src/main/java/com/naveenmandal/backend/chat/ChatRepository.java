@@ -11,7 +11,7 @@ import java.util.Optional;
 @Repository
 public interface ChatRepository extends JpaRepository<Chat, Long> {
 
-    @Query("SELECT c FROM Chat c WHERE c.sender.publicId = :userId OR c.recipient.publicId = :userId")
+    @Query("SELECT c FROM Chat c JOIN FETCH c.sender JOIN FETCH c.recipient WHERE c.sender.publicId = :userId OR c.recipient.publicId = :userId")
     List<Chat> findAllChatsByUserEntityId(@Param("userId") String userId);
 
     @Query("SELECT c FROM Chat c WHERE " +
