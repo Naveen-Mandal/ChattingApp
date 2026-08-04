@@ -30,6 +30,13 @@ spring:
       password: ${REDIS_PASSWORD:YOUR_UPSTASH_PASSWORD_HERE}
       ssl:
         enabled: ${REDIS_SSL_ENABLED:true}
+      lettuce:
+        pool:
+          enabled: true
+          max-active: 8
+          max-idle: 8
+          min-idle: 2
+          time-between-eviction-runs: 30s
   cache:
     type: redis
 

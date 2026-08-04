@@ -108,12 +108,18 @@ The application is built to load production endpoints dynamically via environmen
 * **`CORS_ORIGIN`**: Your deployed frontend URL (e.g., `https://your-app.vercel.app`).
 * **`DB_URL`**: Aiven MySQL string: `jdbc:mysql://<HOST>:<PORT>/<DB_NAME>?useSSL=true&requireSSL=true`
 * **`DB_USER`** / **`DB_PASSWORD`**: Aiven MySQL credentials.
-* **`REDIS_HOST`** / **`REDIS_PORT`** / **`REDIS_PASSWORD`**: Aiven Redis coordinates.
-* **`REDIS_SSL_ENABLED`**: Set to `true` (Aiven Redis enforces TLS).
-* **`KAFKA_BOOTSTRAP_SERVERS`**: Aiven Kafka broker URL (e.g., `kafka-xxx.aivencloud.com:12345`).
-* **`KAFKA_SECURITY_PROTOCOL`**: Set to `SASL_SSL`.
-* **`KAFKA_SASL_MECHANISM`**: Set to `SCRAM-SHA-256`.
-* **`KAFKA_USERNAME`** / **`KAFKA_PASSWORD`**: Aiven Kafka credentials.
+* **`REDIS_HOST`** / **`REDIS_PORT`** / **`REDIS_PASSWORD`**: Redis coordinates (Upstash, Aiven, or any provider).
+* **`REDIS_SSL_ENABLED`**: Set to `true` for managed Redis services (Upstash, Aiven enforce TLS).
+* **`KAFKA_BOOTSTRAP_SERVERS`**: Kafka broker URL (e.g., `kafka-xxx.aivencloud.com:12345` or Upstash endpoint).
+* **`KAFKA_SECURITY_PROTOCOL`**: Set to `SASL_SSL` for managed services, `PLAINTEXT` for local Docker.
+* **`KAFKA_SASL_MECHANISM`**: Set to `SCRAM-SHA-256` for Aiven/Upstash.
+* **`KAFKA_USERNAME`** / **`KAFKA_PASSWORD`**: Managed Kafka credentials.
+* **`KAFKA_CA_CERT`**: (Optional) CA certificate for SSL verification on some providers.
+
+> **⚠️ Important for Managed Kafka/Redis Services**: The application now includes heartbeat configurations to prevent disconnections during idle periods. If your Kafka/Redis still disconnects frequently:
+> - Increase `SESSION_TIMEOUT_MS_CONFIG` (default: 45000ms) in `KafkaConfig.java`
+> - Ensure your firewall/cloud security group allows long-lived TCP connections
+> - Check if your provider has specific keep-alive requirements (e.g., Upstash, Aiven, Confluent Cloud)
 
 ### Frontend Environment Variables
 Set these variables before building your Vite production bundle:

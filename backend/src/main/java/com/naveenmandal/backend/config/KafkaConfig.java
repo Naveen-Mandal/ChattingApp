@@ -102,6 +102,13 @@ public class KafkaConfig {
         props.put("spring.json.trusted.packages", "*");
         props.put("spring.json.value.default.type",
                 "com.naveenmandal.backend.message.MessageDto");
+        
+        // Critical for preventing disconnection on managed Kafka services (Upstash, Aiven, etc.)
+        props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, "45000"); // 45 seconds
+        props.put(ConsumerConfig.HEARTBEAT_INTERVAL_MS_CONFIG, "15000"); // 15 seconds
+        props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, "300000"); // 5 minutes
+        props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "500");
+        
         return new DefaultKafkaConsumerFactory<>(props);
     }
 
